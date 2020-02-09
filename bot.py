@@ -11,24 +11,16 @@ from linebot import (
 from linebot.exceptions import (
     InvalidSignatureError
 )
-from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage, StickerMessage
-)
+from linebot.models import *
 
 # Import system modules
 import sys, os
 
-# Import local modules
-import db, session
-
 # Initialize Flask
 app = Flask(__name__)
 
-# Initialize Session
-session = session.Session()
-
 # Channel API & Webhook
-line_bot_api = LineBotApi('ziOmFT6dChd1K/l4IlRUfe37gYQ9aFiLHsnKi/ukJr5UDcqzh7bgU/i8MBqrqULyuXbHmSdQPAqRWjAciP2IZgrvLoF3ZH2C2Hg+zZMgoy/4W0Ahb7g7l9T7AbQqlNqsVFCJHSCyHOJH6HBT5ccxAgdB04t89/1O/w1cDnyilFU=') # Channel Access Token
+line_bot_api = LineBotApi('XEQclTuSIm6/pcNNB4W9a2DDX/KAbCBmZS4ltBl+g8q2IxwJyqdtgNNY9KtJJxfkuXbHmSdQPAqRWjAciP2IZgrvLoF3ZH2C2Hg+zZMgoy/xM/RbnoFa2eO9GV2F4E1qmjYxA0FbJm1uZkUms9o+4QdB04t89/1O/w1cDnyilFU=') # Channel Access Token
 handler = WebhookHandler('fabfd7538c098fe222e8012e1df65740') # Channel Secret
 
 # Listen to all POST requests from HOST/callback
@@ -47,6 +39,26 @@ def callback():
         abort(400)
     return 'OK'
 
+@app.route("/demo")
+def demo():
+    userid = 'U96df1b7908bfe4d71970d05f344c7694'
+
+    text_message = TextSendMessage(
+        text='Hello, world!',
+        quick_reply=QuickReply(
+            items=[
+                QuickReplyButton(action=MessageAction(label="Hello", text="Hello")),
+                QuickReplyButton(action=MessageAction(label="Bounjour", text="Bounjour")),
+                QuickReplyButton(action=MessageAction(label="Guten tag", text="Guten tag"))
+           ]
+        )
+    )
+
+    line_bot_api.push_message(
+        userid,
+        text_message
+    )
+
 # Text message handler
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -61,44 +73,11 @@ def handle_message(event):
     print(f'User: {userid}')
     print(f'Message: {usermsg}')
 
-    print(f'User status:{session.status}')
-
-    # Check user status
-    stat = db.check_user(userid, usermsg, session)
-
-    # Registration reply
-    if stat == 'r0':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="初次見面，請輸入您的姓名")
-        )
-    elif stat == 'r1':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="請輸入您的生日（年年年年月月日日）")
-        )
-    elif stat == 'r2':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="請輸入您的身份證末四碼")
-        )
-    elif stat == 'r3':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="註冊成功啦")
-        )
-        session.status[userid]['sess_status'] = session.init_state
-    elif stat == 'error':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="不好意思，您的輸入有所異常。請重新輸入…")
-        )
-    else:
     # Reply user
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=event.message.text)
-        )
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=event.message.text)
+    )
 
 # Sticker message handler (echo)
 @handler.add(MessageEvent, message=StickerMessage)
