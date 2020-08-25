@@ -1,100 +1,149 @@
-# Import 3rd-party modules
-import click
-import sqlite3
-from flask import current_app, g
-from flask.cli import with_appcontext
-
 # Import system modules
-import datetime, re
+import datetime
 
-# Connect to DB
-def connect_db(path):
+# Import 3rd-party modules
+import mysql.connector as mariadb
+
+config = {
+    'host': '127.0.0.1',
+    'user': 'DBADMIN',
+    'password': 'P@ssw0rd!',
+    'database': 'chatbot_db',
+}
+
+def query_one(qry, var):
+    """
+    Function for executing `SELECT * FROM table WHERE var0=foo, var1=bar`
+    """
+    row = None
+
     try:
-        conn = sqlite3.connect(path)
-    except Error as e:
-        print(e)
+        conn = mariadb.connect(**config)
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(qry, var)
+            row = cursor.fetchone()
+        except Exception as err:
+            print(err)
+            print(traceback.format_exc())
+        finally:
+            cursor.close()
+    except Exception as err:
+        print(err)
+        print(traceback.format_exc())
+    finally:
+        conn.close()
 
-    return conn
+    if row is None:
+        print("Query result is empty")
 
-# Function factory
-def query(conn, qry):
-    c = conn.cursor()
-    c.execute(qry)
-    rows = c.fetchall()
+    return row
+
+
+def query_all(qry, var):
+    """
+    Function for executing `SELECT * FROM table WHERE var0=foo, var1=bar`
+    """
+    rows = []
+
+    try:
+        conn = mariadb.connect(**config)
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(qry, var)
+            rows = cursor.fetchall()
+        except Exception as err:
+            print(err)
+            print(traceback.format_exc())
+        finally:
+            cursor.close()
+    except Exception as err:
+        print(err)
+        print(traceback.format_exc())
+    finally:
+        conn.close()
+
+    if rows == []:
+        print("Query result is empty")
+
     return rows
 
-def var_query(conn, qry, var):
-    c = conn.cursor()
-    c.execute(qry, var)
-    rows = c.fetchall()
-    return rows
 
-def update(conn, qry, var):
-    c = conn.cursor()
-    c.execute(qry, var)
-    conn.commit()
+def update(qry, var):
+    """
+    Function for updating rows DB (No INSERT)
+    """
+    is_success = False
+    try:
+        conn = mariadb.connect(**config)
+        conn.autocommit = False
+        conn.start_transaction()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(qry, var)
+            is_success = True
+        except mariadb.Error as err:
+            print(err)
+            print(traceback.format_exc())
+        finally:
+            cursor.close()
 
-def drop(conn, qry, var):
-    c = conn.cursor()
-    c.execute(qry, var)
+    except mariadb.Error as err:
+        conn.rollback()
+        print(err)
+        print(traceback.format_exc())
+    else:
+        conn.commit()
+        print("Update successful")
+    finally:
+        conn.close()
 
-# User queries
-def check_user(userid, message, sess):
-    # Initialize Database
-    path = 'medbot.db'
-    conn = connect_db(path)
+    return is_success
 
-    # Check user in DB
-    qry = """SELECT * FROM mb_user WHERE line_id=?"""
-    result = var_query(conn, qry, (userid,))
+def insert(qry, var):
+    """
+    Function for inserting rows into DB
+    """
+    last_row_id = None
+    try:
+        conn = mariadb.connect(**config)
+        conn.autocommit = False
+        conn.start_transaction()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(qry, var)
+            last_row_id = cursor.lastrowid
+        except mariadb.Error as err:
+            print(err)
+            print(traceback.format_exc())
+        finally:
+            cursor.close()
 
-    # New userid detected
-    if not result and userid not in sess.status:
-        sess.add_status(userid)
-        return 'r0'
-    # Get user Chinese name
-    elif not result and sess.status[userid]['sess_status'] == 'r0':
-        if re.match(r'[\u4e00-\u9fff]{2,4}', message):
-            sess.status[userid]["user_name"] = message
-            sess.status[userid]['sess_status'] = 'r1'
-            return 'r1'
-        else:
-            return "error"
-    # Get user birthdate
-    elif not result and sess.status[userid]['sess_status'] == 'r1':
-        year = int(message[0:4])
-        month = int(message[4:6])
-        day = int(message[6:8])
-        birth = str(year) + '-' + str(month) + '-' + str(day) 
-        if len(message)==8 and year <= current_year and 1<=month<=12 and 1<=day<=31:
-            sess.status[userid]["user_bday"] = birth
-            sess.status[userid]['sess_status'] = 'r2'
-            return 'r2'
-        else:
-            return "error"
-    # Get user nric [:-4]
-    elif not result and sess.status[userid]['sess_status'] == 'r2':
-        if len(message)==4 and re.match(r'[\d]', message):
-            name = sess.status[userid]["user_name"]
-            birth = sess.status[userid]["user_bday"]
-            sess.status[userid]["user_nric"] = message
-            nric = message
-            qry = "INSERT INTO mb_user (line_id, name, birth, nric) VALUES (?, ?, ?, ?)"
-            update(conn, qry, (userid, name, birth, nric))
-            sess.status[userid]['sess_status'] = 'r3'
-            return 'r3'
-        else:
-            return "error"
+    except mariadb.Error as err:
+        conn.rollback()
+        print(err)
+        print(traceback.format_exc())
+    else:
+        conn.commit()
+        print("Insert successful")
+    finally:
+        conn.close()
+
+    return last_row_id
+
+def get_user(user_id):
+    qry = "SELECT FROM cb_users (user_id)"
 
 def logs(userid, message, sess):
-    qry = "INSERT INTO mb_logs (user_id, mess_text, timestamp) VALUES (?, ?, ?)"
+    qry = """
+        INSERT INTO cb_logs 
+        (user_id, mess_text, timestamp) 
+        VALUES (?, ?, ?)
+    """
     time = datetime.datetime.now()
-    time = time.strftime("%Y.%m.%d %H:%M:%S")
     update(conn, qry, (userid, message, time))
 
 # Message logs
-
-
 '''
 def get_db():
     if 'db' not in g:
