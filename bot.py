@@ -39,25 +39,25 @@ def callback():
         abort(400)
     return 'OK'
 
-@app.route("/demo")
-def demo():
-    userid = 'U96df1b7908bfe4d71970d05f344c7694'
+# @app.route("/demo")
+# def demo():
+#     userid = 'U96df1b7908bfe4d71970d05f344c7694'
 
-    text_message = TextSendMessage(
-        text='Hello, world!',
-        quick_reply=QuickReply(
-            items=[
-                QuickReplyButton(action=MessageAction(label="Hello", text="Hello")),
-                QuickReplyButton(action=MessageAction(label="Bounjour", text="Bounjour")),
-                QuickReplyButton(action=MessageAction(label="Guten tag", text="Guten tag"))
-           ]
-        )
-    )
+#     text_message = TextSendMessage(
+#         text='Hello, world!',
+#         quick_reply=QuickReply(
+#             items=[
+#                 QuickReplyButton(action=MessageAction(label="Hello", text="Hello")),
+#                 QuickReplyButton(action=MessageAction(label="Bounjour", text="Bounjour")),
+#                 QuickReplyButton(action=MessageAction(label="Guten tag", text="Guten tag"))
+#            ]
+#         )
+#     )
 
-    line_bot_api.push_message(
-        userid,
-        text_message
-    )
+#     line_bot_api.push_message(
+#         userid,
+#         text_message
+#     )
 
 # Text message handler
 @handler.add(MessageEvent, message=TextMessage)
@@ -66,34 +66,22 @@ def handle_message(event):
     # print(event)
 
     # Retreive user metadata
-    userid = event.source.user_id
-    usermsg = event.message.text
+    user_id = event.source.user_id
+    user_msg = event.message.text
 
     # Log user metadata
-    print(f'User: {userid}')
-    print(f'Message: {usermsg}')
+    print(f'User: {user_id}')
+    print(f'Message: {user_msg}')
+
+    resp = bot.converse(user_msg)
 
     # Reply user
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=event.message.text)
+        TextSendMessage(text=resp)
     )
 
-# Sticker message handler (echo)
-@handler.add(MessageEvent, message=StickerMessage)
-def handle_message(event):
-    # Retrieve message metadata
-    id = event.message.id
-    sticker_id = event.message.sticker_id
-    package_id = event.message.package_id
-
-    line_bot_api.reply_message(
-        event.reply_token, 
-        StickerMessage(id=id,sticker_id=sticker_id,package_id=package_id)
-    )
-    pass
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
-

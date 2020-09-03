@@ -141,7 +141,7 @@ def logs(userid, message, sess):
         VALUES (?, ?, ?)
     """
     time = datetime.datetime.now()
-    update(conn, qry, (userid, message, time))
+    insert(conn, qry, (userid, message, time))
 
 # Message logs
 '''
