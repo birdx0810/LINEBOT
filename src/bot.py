@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+# Import system modules
+import sys, os
 
 # Import 3rd-Party Dependencies
 from flask import (
@@ -13,17 +15,24 @@ from linebot.exceptions import (
 )
 from linebot.models import *
 
-# Import system modules
-import sys, os
+# Import local modules
+import env
 
-# Initialize Flask
+#-----------------------------------------------------------#
+#                   Channel API & Webhook                   #
+#-----------------------------------------------------------#
+config = env.get_server_config()
+line_bot_api = LineBotApi(config["line-bot-api"]) # Channel Access Token
+handler = WebhookHandler(config["webhook-handler"]) # Channel Secret
+
+#-----------------------------------------------------------#
+#                      Initialize Flask                     #
+#-----------------------------------------------------------#
 app = Flask(__name__)
 
-# Channel API & Webhook
-line_bot_api = LineBotApi('XEQclTuSIm6/pcNNB4W9a2DDX/KAbCBmZS4ltBl+g8q2IxwJyqdtgNNY9KtJJxfkuXbHmSdQPAqRWjAciP2IZgrvLoF3ZH2C2Hg+zZMgoy/xM/RbnoFa2eO9GV2F4E1qmjYxA0FbJm1uZkUms9o+4QdB04t89/1O/w1cDnyilFU=') # Channel Access Token
-handler = WebhookHandler('fabfd7538c098fe222e8012e1df65740') # Channel Secret
-
-# Listen to all POST requests from HOST/callback
+#-----------------------------------------------------------#
+#                          Callback                         #
+#-----------------------------------------------------------#
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -39,33 +48,12 @@ def callback():
         abort(400)
     return 'OK'
 
-# @app.route("/demo")
-# def demo():
-#     userid = 'U96df1b7908bfe4d71970d05f344c7694'
-
-#     text_message = TextSendMessage(
-#         text='Hello, world!',
-#         quick_reply=QuickReply(
-#             items=[
-#                 QuickReplyButton(action=MessageAction(label="Hello", text="Hello")),
-#                 QuickReplyButton(action=MessageAction(label="Bounjour", text="Bounjour")),
-#                 QuickReplyButton(action=MessageAction(label="Guten tag", text="Guten tag"))
-#            ]
-#         )
-#     )
-
-#     line_bot_api.push_message(
-#         userid,
-#         text_message
-#     )
-
-# Text message handler
+#-----------------------------------------------------------#
+#                    Text message handler                   #
+#-----------------------------------------------------------#
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    # Print event metadata
-    # print(event)
-
-    # Retreive user metadata
+    # Retrieve user metadata
     user_id = event.source.user_id
     user_msg = event.message.text
 
@@ -84,4 +72,8 @@ def handle_message(event):
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(
+        host='0.0.0.0', 
+        port=port,
+        debug=True 
+    )
