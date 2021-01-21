@@ -16,12 +16,12 @@ from linebot.exceptions import (
 from linebot.models import *
 
 # Import local modules
-import env
+import config
 
 #-----------------------------------------------------------#
 #                   Channel API & Webhook                   #
 #-----------------------------------------------------------#
-config = env.get_server_config()
+config = config.get_server_config()
 line_bot_api = LineBotApi(config["line-bot-api"]) # Channel Access Token
 handler = WebhookHandler(config["webhook-handler"]) # Channel Secret
 
@@ -67,13 +67,4 @@ def handle_message(event):
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=resp)
-    )
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8080))
-    app.run(
-        host='0.0.0.0', 
-        port=port,
-        debug=True 
     )

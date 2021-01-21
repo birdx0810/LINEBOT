@@ -4,13 +4,6 @@ import datetime
 # Import 3rd-party modules
 import mysql.connector as mariadb
 
-config = {
-    'host': '127.0.0.1',
-    'user': 'DBADMIN',
-    'password': 'P@ssw0rd!',
-    'database': 'chatbot_db',
-}
-
 def query_one(qry, var):
     """
     Function for executing `SELECT * FROM table WHERE var0=foo, var1=bar`
