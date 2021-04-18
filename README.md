@@ -1,12 +1,17 @@
 # ELIZA@LINE
 An implementation of ELIZA on a LINE chatbot.
 
-
 ## Getting Started
 ```bash
+# Install virtual environment
 pipenv install
-cd src
-export FLASK_APP=bot.py
-export FLASK_ENV=development
-python -m flask run --host=0.0.0.0 --port=8080 --debug=True   
+
+# Spawn shell within venv
+pipenv shell
+
+# Run flask service
+./scripts/run.sh
+
+# Exit pipenv
+exit
 ```

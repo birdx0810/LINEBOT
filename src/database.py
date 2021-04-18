@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Import system modules
 import datetime
 
@@ -31,7 +32,6 @@ def query_one(qry, var):
         print("Query result is empty")
 
     return row
-
 
 def query_all(qry, var):
     """
