@@ -12,6 +12,4 @@ pipenv shell
 # Run flask service
 ./scripts/run.sh
 
-# Exit pipenv
-exit
 ```

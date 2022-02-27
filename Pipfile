@@ -7,8 +7,9 @@ name = "pypi"
 Flask = "*"
 line-bot-sdk = "==1.14.0"
 flask = "*"
+nltk = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3"
